@@ -30,20 +30,20 @@ class Todo(db.Model):
 # db.create_all()
 
 
-@app.route('/todos/create/<list_id>', methods=['POST'])
-def create_todo(list_id):
+@app.route('/todos/create', methods=['POST'])
+def create_todo():
     error = False
     body = {}
     try:
         description = request.get_json()['description']
         print(description)
-        new_item = Todo(description=description, completed=False, list_id=list_id)
+        new_item = Todo(description=description, completed=False)
         db.session.add(new_item)
         db.session.commit()
         body['id'] = new_item.id
         body['completed'] = new_item.completed
         body['description'] = new_item.description
-        body['list_id'] = new_item.list_id
+      
     except:
         error = True
         db.session.rollback()
