@@ -19,7 +19,7 @@
         .lists-wrapper,
         .todos-wrapper {
             display: inline-block;
-            vertical-align: top;
+            vertical-align: top !important;
         }
 
         input[type=checkbox]:checked+label.strikethrough {
@@ -56,7 +56,15 @@
 
         <ul id='lists'>
             {% for list in lists %}
-            <a href="/lists/{{list.id}}">{{list.name}}</a>
+            
+            <li>
+                <input  data-id="{{list.id}}" class="check-completed" type="checkbox" {%if list.done %} checked
+                    style='text-decoration: line-through;' {% endif %} />
+                <label class="strikethrough">
+                <a href="/lists/{{list.id}}" >{{list.name}}</a>
+                    <button data-id="{{list.id}}" class="delete-list" >&cross;</button>
+            </li>
+            
             {% endfor %}
         </ul>
     </div>
@@ -123,10 +131,12 @@
 
         document.getElementById('form-todo').onsubmit = function(e) {
             e.preventDefault();
+            
             fetch('/todos/create', {
                 method: 'POST',
                 body: JSON.stringify({
-                    'description': document.getElementById('description').value
+                    'description': document.getElementById('description').value,
+                    'list_id': {{ active_list.id }}
                 }),
                 headers: {
                     'Content-Type': 'application/json',
@@ -175,17 +185,34 @@
              
                 .then(function (jsonResponse) {
                     console.log(jsonResponse);
-                    const liItem = document.createElement('LI');
-                    liItem.innnerHTML = jsonResponse.name;
-                    //liItem.appendChild(text);
-
-                    document.getElementById('lists').appendChild(liItem);
+                    const listItem = document.createElement('LI');
+                    const list_name = document.createTextNode(' ' + jsonResponse.name);
+                    listItem.appendChild(text);
+                    console.log(document.getElementById('lists'));
+                    console.log("test");
+                    document.getElementById('lists').appendChild(listItem);
+                    console.log(document.getElementById('lists'));
                     document.getElementById('error-list').className = 'hidden-list';
                 })
                 .catch(function () {
                     document.getElementById('error-list').className = '';
                 })
 
+        }
+
+        const list_to_delete = document.querySelectorAll('.delete-list');
+        for (let i = 0; i < list_to_delete.length; i++) {
+            const listbtn = list_to_delete[i];
+            listbtn.onclick = function (e) {
+                const listId = e.target.dataset['id'];
+                fetch('/lists/' + listId, {
+                    method: 'DELETE'
+                })
+                    .then(function () {
+                        const item = e.target.parentElement;
+                        item.remove();
+                    })
+            }
         }
     </script>
 </body>
