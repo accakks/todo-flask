@@ -92,6 +92,7 @@ def create_list():
         db.session.add(new_list)
         db.session.commit()
         body['name'] = new_list.name
+        body['id'] = new_list.id
 
     except:
         error = True
@@ -116,10 +117,27 @@ def delete_list(list_id):
         db.session.close()
     return jsonify({'success': True})
 
+@app.route('/lists/<list_id>/set-done', methods=['POST'])
+def set_done_list(list_id):
+    try:
+        done = request.get_json()['done']
+        todolist = TodoList.query.get(list_id)
+        todolist.done = done
+        todos = Todo.query.filter_by(list_id=list_id).all()
+        for i in range(len(todos)):
+            todo = todos[i]
+            todo.completed = done
+        db.session.commit()
+    except:
+        db.session.rollback()
+    finally:
+        db.session.close()
+    return redirect(url_for('index'))
+
 @app.route('/lists/<list_id>')
 def get_list_todos(list_id):
     return render_template('index.html',
-                           lists=TodoList.query.all(),
+                           lists=TodoList.query.order_by('id').all(),
                            active_list = TodoList.query.get(list_id),
                            todos=Todo.query.filter_by(list_id=list_id).order_by('id').all())
 
